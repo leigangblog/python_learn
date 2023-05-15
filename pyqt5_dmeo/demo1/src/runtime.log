@@ -1,0 +1,4 @@
+2023-04-30 00:20:52.801 | DEBUG    | __main__:main:44 - main start
+2023-04-30 00:20:52.801 | DEBUG    | __main__:parse_args:19 - parse_args start
+2023-04-30 00:20:52.801 | DEBUG    | __main__:func_proc_run:39 - run start
+2023-04-30 00:20:52.802 | DEBUG    | __main__:func_proc_run:40 - src_path:log,dest_path:decode_log,keyword:keyword.json

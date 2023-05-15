@@ -1,0 +1,12 @@
+20230515 20:12:06 - MainProcess | MainThread | re_test_demo.main:26 - DEBUG ------------------------start-------------------------
+20230515 20:12:06 - MainProcess | MainThread | re_test_demo.run:20 - DEBUG -run
+20230515 20:12:06 - MainProcess | MainThread | re_test_demo.main:28 - DEBUG ------------------------end-------------------------
+20230515 20:13:30 - MainProcess | MainThread | re_test_demo.main:26 - DEBUG ------------------------start-------------------------
+20230515 20:13:30 - MainProcess | MainThread | re_test_demo.run:20 - DEBUG -run
+20230515 20:13:30 - MainProcess | MainThread | re_test_demo.main:28 - DEBUG ------------------------end-------------------------
+20230515 20:15:58|MainProcess-MainThread | re_test_demo.main:22 - DEBUG ------------------------start-------------------------
+20230515 20:15:58|MainProcess-MainThread | re_test_demo.run:16 - DEBUG -run
+20230515 20:15:58|MainProcess-MainThread | re_test_demo.main:24 - DEBUG ------------------------end-------------------------
+20230515 20:16:13 - MainProcess | MainThread | re_test_demo.main:26 - DEBUG ------------------------start-------------------------
+20230515 20:16:13 - MainProcess | MainThread | re_test_demo.run:20 - DEBUG -run
+20230515 20:16:13 - MainProcess | MainThread | re_test_demo.main:28 - DEBUG ------------------------end-------------------------

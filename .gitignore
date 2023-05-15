@@ -1,0 +1,6 @@
+# python设置
+/venv/
+/.idea/
+__pycache__/*
+*.pyc
+

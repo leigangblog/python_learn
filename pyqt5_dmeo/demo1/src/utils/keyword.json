@@ -1,0 +1,19 @@
+{
+	"version": "1.0",
+	"keyword_list": [{
+			"keyword": "ERROR"
+		},
+		{
+			"keyword": "history_command"
+		},
+		{
+			"keyword": "command"
+		},
+		{
+			"keyword": "Caller trace"
+		},
+		{
+			"keyword": "kui_load_pg"
+		}
+	]
+}
