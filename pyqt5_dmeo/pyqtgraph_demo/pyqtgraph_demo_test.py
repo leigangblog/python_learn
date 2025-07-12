@@ -9,4 +9,12 @@
 # pip install pyqtgraph
 import pyqtgraph.examples
 
-pyqtgraph.examples.run()
+def run1():
+    pyqtgraph.examples.run()
+
+
+def main():
+    run1()
+
+if __name__ == '__main__':
+    main()

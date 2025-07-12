@@ -1,0 +1,233 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+"""
+@author:lei
+@file:func3.py
+@time:2025/07/13
+@邮箱：leigang431@163.com
+"""
+import sys
+import pandas as pd
+import numpy as np
+import pyqtgraph as pg
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+                             QTableView, QPushButton, QFileDialog, QLabel, QComboBox,
+                             QSplitter, QTextEdit, QHeaderView)
+from PyQt5.QtCore import Qt, QAbstractTableModel
+
+
+class PandasModel(QAbstractTableModel):
+    """数据模型：封装Pandas DataFrame供TableView使用"""
+
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parent=None):
+        return self._data.shape[1]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            return str(self._data.iloc[index.row(), index.column()])
+        return None
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._data.columns[section])
+            elif orientation == Qt.Vertical:
+                return str(self._data.index[section])
+        return None
+
+
+class CSVModel:
+    """Model层：处理数据加载和计算"""
+
+    def __init__(self):
+        self.df = pd.DataFrame()
+        self.stats = {}
+
+    def load_csv(self, file_path):
+        """加载CSV文件并计算统计信息[1,5](@ref)"""
+        try:
+            self.df = pd.read_csv(file_path)
+            self.calculate_stats()
+            return True
+        except Exception as e:
+            print(f"Error loading CSV: {e}")
+            return False
+
+    def calculate_stats(self):
+        """计算每列的统计信息[3,5](@ref)"""
+        self.stats = {}
+        for col in self.df.columns:
+            if pd.api.types.is_numeric_dtype(self.df[col]):
+                col_stats = {
+                    'min': self.df[col].min(),
+                    'max': self.df[col].max(),
+                    'mean': self.df[col].mean(),
+                    'min_rows': self.df[self.df[col] == self.df[col].min()],
+                    'max_rows': self.df[self.df[col] == self.df[col].max()]
+                }
+                self.stats[col] = col_stats
+
+    def get_plot_data(self, column):
+        """获取绘图数据"""
+        return self.df[column].values if column in self.df.columns else []
+
+
+class CSVViewModel:
+    """ViewModel层：协调Model和View之间的交互"""
+
+    def __init__(self, model):
+        self.model = model
+        self.current_column = None
+
+    def load_file(self, file_path):
+        success = self.model.load_csv(file_path)
+        return success, self.model.df.columns.tolist() if success else []
+
+    def get_column_stats(self, column):
+        """获取指定列的统计信息"""
+        if column in self.model.stats:
+            self.current_column = column
+            return self.model.stats[column]
+        return None
+
+    def get_plot_data(self):
+        """获取当前列的绘图数据"""
+        if self.current_column:
+            return self.model.get_plot_data(self.current_column)
+        return []
+
+
+class CSVView(QMainWindow):
+    """View层：用户界面"""
+
+    def __init__(self, view_model):
+        super().__init__()
+        self.view_model = view_model
+        self.init_ui()
+
+    def init_ui(self):
+        """初始化用户界面"""
+        self.setWindowTitle('CSV数据分析工具')
+        self.setGeometry(100, 100, 1200, 800)
+
+        # 主布局
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QVBoxLayout(main_widget)
+
+        # 顶部控制栏
+        control_layout = QHBoxLayout()
+        self.open_btn = QPushButton('打开CSV文件')
+        self.open_btn.clicked.connect(self.open_file)
+        self.column_selector = QComboBox()
+        self.column_selector.currentIndexChanged.connect(self.update_display)
+        control_layout.addWidget(self.open_btn)
+        control_layout.addWidget(QLabel('选择列:'))
+        control_layout.addWidget(self.column_selector)
+        control_layout.addStretch()
+
+        # 主内容区
+        splitter = QSplitter(Qt.Horizontal)
+
+        # 表格视图
+        self.table_view = QTableView()
+        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        # 统计信息显示
+        self.stats_display = QTextEdit()
+        self.stats_display.setReadOnly(True)
+
+        # 图表区域
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('w')
+        self.plot_widget.showGrid(x=True, y=True)
+
+        # 右侧面板布局
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.addWidget(QLabel('统计信息:'))
+        right_layout.addWidget(self.stats_display)
+        right_layout.addWidget(QLabel('数据可视化:'))
+        right_layout.addWidget(self.plot_widget)
+
+        splitter.addWidget(self.table_view)
+        splitter.addWidget(right_panel)
+        splitter.setSizes([600, 400])
+
+        # 添加所有组件到主布局
+        main_layout.addLayout(control_layout)
+        main_layout.addWidget(splitter)
+
+    def open_file(self):
+        """打开CSV文件[2,5](@ref)"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "打开CSV文件", "", "CSV文件 (*.csv)"
+        )
+        if file_path:
+            success, columns = self.view_model.load_file(file_path)
+            if success:
+                self.update_table()
+                self.column_selector.clear()
+                self.column_selector.addItems(columns)
+                if columns:
+                    self.column_selector.setCurrentIndex(0)
+
+    def update_table(self):
+        """更新表格视图"""
+        model = PandasModel(self.view_model.model.df)
+        self.table_view.setModel(model)
+
+    def update_display(self):
+        """更新统计信息和图表"""
+        column = self.column_selector.currentText()
+        stats = self.view_model.get_column_stats(column)
+
+        if stats:
+            # 显示统计信息
+            stats_text = f"=== {column} ===\n"
+            stats_text += f"最小值: {stats['min']:.4f}\n"
+            stats_text += f"最大值: {stats['max']:.4f}\n"
+            stats_text += f"平均值: {stats['mean']:.4f}\n\n"
+
+            stats_text += "最小值所在行:\n"
+            for _, row in stats['min_rows'].iterrows():
+                stats_text += f"• 行{row.name + 1}: {row.to_dict()}\n"
+
+            stats_text += "\n最大值所在行:\n"
+            for _, row in stats['max_rows'].iterrows():
+                stats_text += f"• 行{row.name + 1}: {row.to_dict()}\n"
+
+            self.stats_display.setText(stats_text)
+
+            # 更新图表
+            self.plot_widget.clear()
+            plot_data = self.view_model.get_plot_data()
+            if plot_data.size > 0:
+                self.plot_widget.plot(plot_data, pen=pg.mkPen('b', width=2))
+                self.plot_widget.setTitle(f"{column} 数据趋势")
+                self.plot_widget.setLabel('left', column)
+                self.plot_widget.setLabel('bottom', '行号')
+
+
+def main():
+    """应用入口点"""
+    app = QApplication(sys.argv)
+
+    # 初始化MVVM组件
+    model = CSVModel()
+    view_model = CSVViewModel(model)
+    view = CSVView(view_model)
+
+    view.show()
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
